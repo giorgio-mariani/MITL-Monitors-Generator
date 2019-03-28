@@ -1,0 +1,163 @@
+\documentclass[10pt,a4paper]{article}
+
+%Import dei pacchetti necessari
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage[italian]{varioref}
+\usepackage{amsfonts,amsmath,amssymb,graphicx}
+\usepackage{multicol}
+\usepackage[hidelinks]{hyperref}
+
+\input{../../commands.sty}
+
+\author{Giorgio Mariani}
+\date{}
+\title{Descrizione del Sistema}
+
+
+\newcommand{\OutputLibraryFileName}{\textbf{bltl\_lib.slx}}
+\newcommand{\MonitorName}[1]{\textbf{monitor\_}$#1$}
+
+\newcommand{\LibGentx}{{Library Generator}}
+\newcommand{\MonMakertx}{{Monitor Maker}}
+\newcommand{\Parsertx}{{Parser}}	
+\newcommand{\MonLibrtx}{{Monitor Library}}
+
+\newcommand{\LibGen}{\emph{\LibGentx}}
+\newcommand{\MonMaker}{\emph{\MonMakertx}}
+\newcommand{\Parser}{\emph{\Parsertx}}	
+\newcommand{\MonLibr}{\emph{\MonLibrtx}}
+
+\newcommand{\MexSFunction}{\textbf{mexSfunction.mex\emph{arch}}}
+  
+  \begin{document}
+  	\maketitle{}
+	\begin{abstract}
+		In questo documento viene data una descrizione generale del comportamento del sistema interessato, andando a descrivere input, output e componenti interne di questo. Lo scopo di mantenere informazioni più dettagliate è riservato ad altri documenti.
+	\end{abstract}
+	
+	%veloce introduzione del sistema
+	\section{Scopo del Sistema}
+	Il sistema si pone come obbiettivo la capacità di generare automaticamente delle librerie \Simulink{} contenenti monitor\footnote{Con monitor si intende un sistema in grado di verificare se una certa proprietà (scritta in una qualche logica) sia vera.} per formule in \emph{Bounded Linear Temporal Logic} (\BLTL{}).
+	Come input il sistema richiede due stringhe; il nome di un file contente formule \BLTL{} ed il nome della directory in cui verrà inserita la libreria in output.
+	
+	\section{Input del Sistema}
+	
+	\begin{multicols}{2}
+		\subsection*{Input formula file}
+		Il primo input del sistema è il nome di un file contente le formule \BLTL{} di cui interessa generare i monitor. Questo input è obbligatorio per il corretto funzionamento del sistema. Il file deve essere codificato secondo la codifica \InputFileEncoding{}.
+		
+	\vfill\null
+	\columnbreak
+	
+		\subsection*{Output directory} 
+		Il secondo input del sistema è il nome della directory in cui verrà salvata la libreria in output, assieme a dei file di supporto per questa. Occorre che non esista una directory o un file con il nome specificato, la cartella infatti verrà creata durante l'esecuzione del sistema. Inoltre occorre che la cartella padre a quella indicata sia esistente. %TODO chiedere a mari riguardo a questo
+		Questo input non è necessario, infatti nel caso in cui non venga specificato una cartella con un nome di default verrà creata (nella stessa directory dove si trova locato il sistema).
+	\end{multicols}
+	
+	\section{Output del Sistema}
+	Come precedentemente accennato il sistema durante la sua esecuzione crea la \OutputDir{} utilizzando il nome dato in input, dentro a  questa vengono inseriti diversi file, ora presentati.
+	
+	\subsection*{Output library} 
+	Al termine di un esecuzione corretta del sistema dovrà essere presente nella \OutputDir{} un file (con nome \OutputLibraryFileName{}) contenente la libreria generata, in particolare per ogni formula nell' \InputFile{} è presente un blocco  sottosistema rappresentante il monitor per quella proprietà. Tali sottosistemi prendono in input un numero di segnali reali non complessi equivalente al numero di variabili presenti nella formula associata e da in output un segnale booleano.
+	Il nome del monitor associato alla $i$-esima formula in \InputFile{} è indicato con \MonitorName{i}.
+	
+	\subsubsection*{Monitor generati}
+	I monitor generati sono sotto-sistemi con lo scopo di indicare se la formula generatrice, durante l'esecuzione di un modello contenente il monitor, si falsifica per almeno un istante. Se si verificasse una situazione del genere il monitor restituirebbe come output (da quel momento fino al termine della simulazione) il valore \textbf{1}, altrimenti \textbf{0} è restituito.	
+	Per poter utilizzare il monitor occorre copiarlo dalla \OutputLibrary{} nel modello interessato.
+	
+	\subsection*{Output Support Files}
+	Nella \OutputDir{} oltre alla libreria generata saranno presenti dei file di supporto, appunto utilizzati per il corretto funzionamento di questa. In particolare i file che dovranno necessariamente essere contenuti nella cartella di output sono:
+	
+	\begin{multicols}{2}
+		 \subsubsection*{\MexSFunction} Funzione \emph{mex} implementante una S-Function utilizzata nei monitor. Il suffisso \emph{arch} indica l'archittetura per cui l'eseguibile è stato compilato.\vfill\null\columnbreak
+		 \subsubsection*{slblocks.m} Funzione \Matlab{} contenente meta-dati per la libreria generata, in particolare consente la visualizzazione di questa nel \emph{Library Browser} di \Simulink.
+	\end{multicols}
+
+	\section{Logiche Temporali utilizzate}
+	%TODO citation linear temporal logic
+	Nel sistema vengono utilizzate due logiche temporali estremamente simili tra loro, entrambe derivate dalla famosa \emph{Linear Temporal Logic}, logica utilizzata per verificare proprietà "dilatate" nel tempo.
+	
+	\begin{multicols}{2}
+	\subsection*{Bounded Linear Temporal Logic (\BLTL)}
+	L'utente del sistema si interfaccerà solo con questo tipo di logica, ha come costrutto base  (ovvero le foglie dell'albero sintattico di una formula generica) dei predicati formati da relazioni su combinazioni lineari di variabili reali (oppure delle costanti booleane). Per decidere la validità di una formula per questa logica occorre avere a disposizione una traccia di simulazione che assegni un valore alle variabili utilizzate per un intervallo temporale.
+	
+	\subsubsection*{ESEMPIO}
+	Un esempio di  formula in \BLTL{} è il seguente:
+	$$\Future{1} (a\cdot x_1 + b \cdot x_2 \le \beta \land True)$$
+	Con $a,b,\beta \in \Reals$ e $x_1$, $x_2$ nomi di variabili dipendenti dal tempo e definite dalla traccia di simulazione utilizzata.
+	
+	\vfill\null\columnbreak
+	\subsection*{\BLTLstar}
+	 Versione leggermente diversa della \BLTL{} dove invece di avere traccie definite su variabili reali si hanno traccie definite direttamente sui predicati nella formula. Questa logica viene utilizzata all'interno del sistema e invisibile all'utente.
+	 
+	\subsubsection*{ESEMPIO}
+	 Un esempio di  formula in \BLTLstar{} è il seguente:
+	 $$\Future{1} (\rho\land True)$$
+	 Con $\rho$  un predicato il cui valore dipende dal tempo e definito dalla traccia utilizzata per la valutazione.
+	 \end{multicols}
+	
+	\newpage
+	% introduzione alle componenti del sistema 
+	\section{Componenti del Sistema}
+	Viene presentato ora un elenco delle componenti che costituisco il sistema, insieme ad una veloce descrizione:
+	\begin{description}
+		\item[\Parsertx{}] Componente che si occupa della lettura dell' \InputFile{} e della successiva costruzione degli albero sintattici associati alle formule presenti nel file. 
+
+		\item[\LibGentx{}]
+		Componente che gestisce la creazione ed il trasferimento dei file da utilizzare, assieme alla compilazione dei \emph{mex} file utilizzati. Inoltre gestisce gli interfacciamenti tra le altre componenti.
+
+		
+		\item[\MonMakertx]
+		 Componente che si occupa,dato un modello \Simulink{} ed un albero sintattico \BLTL{},  di aggiungere un sotto-sistema con funzione di monitor per la formula rappresentata dall'albero.
+
+		\item[\MonLibrtx{}]
+		 Componente che mantiene una libreria \emph{C++} utilizzata per il corretto funzionamento dei monitor costruiti.
+	\end{description}
+
+
+	%Descrizione del sistema
+	\subsection*{\Parsertx}
+	Come precedentemente introdotto questa parte del sistema si occupa della lettura di \InputFile{}, e nel caso questo sia esistente e rappresentante un insieme di formule valide, questa costruisce una sequenza di alberi sintattici per ogni formula. Questa componente nell'effettivo  genera un array di strutture \Matlab{} con dei campi precisi, mantenenti le informazioni necessarie per la costruzione dei monitor.
+	In particolare gli alberi costruiti verranno utilizzati da \MonMaker{} per la generazione dei rispettivi monitor nella \OutputLibrary. 
+	
+	\subsection*{\LibGentx}
+	Parte del sistema che gestisce e coordina le altre componenti, assieme alla costruzione della \OutputDir{}, inizializzazione e salvataggio della \OutputLibrary{} ed al trasferimento dei file di supporto necessari. Inoltre questa componente gestisce la compilazione dei \emph{mex} file utilizzati dai monitor generati. Questa può essere quindi considerata la componente principale del sistema, che organizza e si interfaccia con le altri parti del sistema.   
+	
+	\subsection*{\MonMakertx}
+	La componente \MonMaker{} gestisce la costruzione dei monitor nella libreria. In particolare dati un nome \emph{monitor\_name}, un modello \Simulink{} \emph{lib} ed un albero sintattico \emph{tree}, questa si occupa di costruire un sotto-sistema in \emph{lib} chiamato \emph{monitor\_name} e di aggiungere a questo i blocchi necessari affinché questo controlli correttamente che la proprietà indicata da \emph{tree} rimanga valida durante la simulazione del sistema contente il monitor.
+	
+	\begin{multicols}{2}
+	[\paragraph{Dettagli monitor generato}]
+	Il monitor generato avrà tante porte in input quante sono le variabili utilizzate nei predicati della formula generatrice, il segnale che le porte in input prendono deve essere di tipo scalare reale non complesso. Il monitor è dotato di un unica porta in output, con tipo scalare booleano, tale porta restituisce il valore \textbf{1} se durante la simulazione la proprietà associata al monitor si è falsificata per almeno un istante. Più nel dettaglio, sia $t$ l'istante associato ad un \Mstep, allora se la proprietà si è falsificata per almeno un istante tra l'inizio di simulazione e $t-\delta$ (con $\delta$ un valore reale dipendente dalla struttura della formula) allora per quel \Mstep{} il valore restituito in output dal monitor è \textbf{1}, altrimenti è \textbf{0}.
+		\end{multicols}
+	
+	\subsection*{\MonLibrtx}
+	Parte non propriamente attiva del sistema, consiste in un insieme di classi e file \emph{C++} utilizzate per  calcolare la validità di una formula \BLTLstar{}. Queste file contengono anche un implementazione di una S-function, utilizzata dai monitor generati.
+	Queste classi vengono compilate in un unico \Mex{} file chiamato \MexSFunction{}.
+	
+	% usage tipico
+	{
+		\newcommand{\File}{\emph{infile.txt}}
+		\newcommand{\Model}{\emph{model.slx}}
+		
+		\newpage
+	\section{Utilizzo tipico}
+	Supponiamo di avere un modello \Simulink{} chiamato \Model{} di cui siamo interessati a testare se vale o meno una certa formula \BLTL{} $\phi$, come possiamo  per risolvere questo problema?
+	Una soluzione consisterebbe appunto nell'utilizzo del sistema mostrato, seguendo i passaggi ora riportati:
+	\begin{enumerate}
+		\item Creazione del file \File{} contente una corretta rappresentazione di $phi$.
+		\item Esecuzione del sistema con in input \File{} ed il nome della directory in cui vogliamo sia salvato la libreria in output (\OutputDir).
+		\item Aggiunta della \OutputDir{} al \Matlab{} path.
+		\item Avvio di \Simulink.
+		\item Apertura di \Model{}.
+		\item Apertura del \emph{Library Browser}
+		\item Apertura della libreria generata (\OutputLibrary) nel \emph{Library Browser}.
+		\item \emph{Drag-and-drop} del monitor associato a $phi$ nel modello \Model{} (questo causa la copia del blocco in \Model).
+		\item Assegnare i rispettivi segnali in \Model{} come input al monitor appena copiato (per ogni variabile in $phi$ dovrebbe esserci una porta con lo stesso nome nel monitor).
+		\item Collegare output monitor ad un blocco che ne elabori il segnale (ad esempio potremmo voler interrompere la simulazione quando la proprietà diventa falsa  collegando il segnale ad un \emph{assertion block}).
+		\item Simulare.
+	\end{enumerate}
+	
+\end{document}

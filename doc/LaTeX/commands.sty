@@ -1,0 +1,60 @@
+%command definitions
+\newcommand{\Simulink}{\mbox{\emph{Simulink}\textsuperscript{\textregistered}}}
+\newcommand{\Matlab}{\mbox{\emph{MATLAB}\textsuperscript{\textregistered}}}
+\newcommand{\MathWorks}{\mbox{\emph{MathWorks}\textsuperscript{\textregistered}}}
+\newcommand{\BLTL}{\mbox{\emph{BLTL}}}
+\newcommand{\BLTLstar}{\mbox{\emph{BLTL*}}}
+\newcommand{\Mex}{\mbox{\emph{mex}}}
+
+\newcommand{\BlockType}[1]{\textbf{#1}}
+
+
+%Notazione matematica
+\newcommand{\Reals}{\mathbb{R}}
+\newcommand{\Naturals}{\mathbb{N}}
+\newcommand{\Integers}{\mathbb{Z}}
+
+%Definizioni relative teoria BLTL
+\newcommand{\Variables}{\mathcal{V}}
+\newcommand{\Horizon}{h}
+\newcommand{\StartTime}{s}
+\newcommand{\MinTime}{minTime}
+\newcommand{\MetaRel}{\mathcal{R}}
+\newcommand{\Until}[1]{\mathbf{U^{#1}}}
+\newcommand{\UntilUnit}[1]{\Delta^{#1}}
+\newcommand{\Future}[1]{\Diamond^{#1}}
+\newcommand{\Globally}[1]{\Box^{#1}}
+
+
+%Definizioni Simulink
+\newcommand{\Mstep}{\emph{Major-timestep}}
+
+% RISORSE SISTEMA
+\newcommand{\InputFile}{\emph{input file}}
+\newcommand{\OutputDir}{\emph{output directory}}
+\newcommand{\OutputLibrary}{\emph{output library}}
+
+%Comandi grammatica
+\newcommand{\Grammar}[1]{\textbf{#1}}
+\newcommand{\FALSE}{\Grammar{FALSE}}
+\newcommand{\TRUE}{\Grammar{TRUE}}
+\newcommand{\NOT}{\Grammar{NOT}}
+\newcommand{\AND}{\Grammar{AND}}
+\newcommand{\OR}{\Grammar{OR}}
+
+\newcommand{\UNTILword}{\Grammar{UNTIL}}
+\newcommand{\FUTUREword}{\Grammar{FUTURE}}
+\newcommand{\GLOBALLYword}{\Grammar{GLOBALLY}}
+
+\newcommand{\UNTIL}[1]{\UNTILword[#1]}
+\newcommand{\FUTURE}[1]{\FUTUREword[#1]}
+\newcommand{\GLOBALLY}[1]{\GLOBALLYword[#1]}
+
+% FONT TYPEFACE SETTINGS
+\renewcommand*\rmdefault{ppl}
+
+% PAGE LAYOUT SETTINGS
+\usepackage{fullpage}
+
+%INPUT FILE ENCODING
+\newcommand{\InputFileEncoding}{\textbf{ISO/IEC 8859-1}}

@@ -1,0 +1,181 @@
+\documentclass[10pt,a4paper]{article}
+
+%Import dei pacchetti necessari
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage[italian]{varioref}
+\usepackage{amsfonts,amsmath,amssymb,graphicx}
+\usepackage[boxed]{algorithm}
+\usepackage[noend]{algorithmic}
+\usepackage{listings}
+\usepackage{syntax}
+\usepackage{paracol}
+\usepackage[hidelinks]{hyperref}
+
+
+
+\input{../../commands.sty}
+
+
+
+%preamble
+\author{Giorgio Mariani}
+\date{}
+\title{Definizione Formato File}
+
+\begin{document}
+	\maketitle
+	\begin{abstract}
+		In questo documento vengono specificate informazioni relative al file contenente le formule \BLTL{}.
+	\end{abstract}
+	 \begin{paracol}{2}
+		\subsection*{Codifica file}
+		Il file deve utilizzare la codifica \textbf{ISO/IEC 8859-1}, questa è un estensione della codifica \textbf{ASCII} pensata per codificare i caratteri utilizzati in Europa.
+		
+		\switchcolumn
+		
+		\subsection*{Formato file}
+		Il file deve essere composto da una sequenza di formule \BLTL{} (La cui grammatica è definita più avanti) separate dalla stringa "\textbf{::}". Deve essere presente almeno una formula nel file. 
+	\end{paracol}
+	
+	\section{Grammatica utilizzata}
+	Consideriamo una formula in \emph{Bounded Linear Temporal Logic} (\BLTL{}) $\phi$, definiamo in base alla struttura di $\phi$ come questa debba essere rappresentata in forma di stringa nel file dato in input:
+	
+	\begin{itemize}
+		\item $\phi=True$ oppure $\phi=False$: sono indicati rispettivamente attraverso le stringhe \TRUE{} e \FALSE{}.
+		\item $\phi = \rho$, con:
+			\begin{equation*}
+				\rho = \sum_{i=0}^{n}{\alpha{}_i x_i\ \MetaRel\ \beta{}}
+			\end{equation*}
+			Viene indicato con la seguente sintassi:
+			\begin{center}
+				\newcommand{\Prod}{\textbf{*}}
+				\newcommand{\Sum}{\textbf{+}}
+				$\alpha_1$\Prod$x_1$ \Sum{} $\alpha_2$\Prod$x_2$ \emph{...} $\alpha_n$\Prod$x_n$ $\MetaRel$ $\beta$
+			\end{center}
+			
+			Espressioni del tipo $\alpha_i$ e $x_i$ rappresentano rispettivamente un valore reale non negativo ed un nome di variabile.
+			
+			I nomi di variabile devono rispettare la seguente \emph{regular expression}\footnote{sintassi del programma \textbf{egrep}.}:
+			\begin{center}
+				[a-zA-Z\_][a-zA-Z0-9\_]*
+			\end{center}
+			
+			Espressioni del tipo  $\alpha_i$*$x_i$ possono anche essere scritte come:  $\alpha_i$$x_i$, $x_i$*$\alpha_i$, $x_i$$\alpha_i$ oppure soltanto $x_i$ se il valore di $\alpha_i$ è $1$.
+			
+			Con \emph{...} abbiamo indicato una sequenza arbitrariamente lunga di espressioni del tipo $\alpha_i$*$x_i$ precedute dal carattere \textbf{+} oppure \textbf{-} (nel primo prodotto può essere omesso).
+			
+			La espressione $\MetaRel$ indica una tra seguenti stringhe: <, <=, >, >=, $\sim$=, =. La espressione $\beta$ è un valore reale.
+			 
+			 \newpage
+			 \hrulefill
+			 %-----------------------------------------------------------------------------------------------------
+			 
+			\begin{paracol}{3}
+			\item $\phi = \lnot f_1$:\\ è indicata dalla parola chiave \NOT{} ed è  espressa come segue:
+				\begin{center}
+					\NOT{} \emph{formula}
+				\end{center}
+			
+			\switchcolumn
+			
+			\item $\phi =  \Future{\alpha} f_1$:\\ è indicata dalla parola chiave \FUTUREword{} ed è  espressa come segue:
+			\begin{center}
+				\FUTURE{$\alpha$} \emph{formula}
+			\end{center}
+			Con $\alpha$ valore reale positivo.
+			
+			\switchcolumn
+			
+			\item $\phi =  \Globally{\alpha} f_1$:\\ è indicata dalla parola chiave \GLOBALLYword{} ed è  espressa come segue:
+			\begin{center}
+				\GLOBALLY{$\alpha$} \emph{formula}
+			\end{center}
+			Con $\alpha$ valore reale positivo.
+		\end{paracol}
+	
+		I costrutti \NOT, \GLOBALLYword{} e \FUTUREword{} hanno la precedenza più alta, quindi nel caso si voglia utilizzarli per espressioni non banali occorre racchiudere il corpo dentro a delle parentesi tonde.
+		
+		\paragraph{ESEMPIO}
+			\begin{center}
+				\FUTURE{1}( \emph{formula} \AND{} \emph{formula} )
+			\end{center}
+		\hrulefill
+		%-----------------------------------------------------------------------------------------------------
+	
+		\begin{paracol}{2}
+			\item $\phi = f_1 \land f_2$: è indicata dalla parola chiave \AND{} ed è  espressa come segue:
+				\begin{center}
+					\emph{formula} \AND{} \emph{formula}
+				\end{center}
+				L'operatore \AND{} è il costrutto con la seconda precedenza più alta. La associatività dell'operatore è da sinistra verso destra.
+		
+		\switchcolumn
+		
+			\item $\phi = f_1 \lor f_2$: è indicata dalla parola chiave \OR{} ed è  espressa come segue:
+				\begin{center}
+					\emph{formula} \OR{} \emph{formula}
+				\end{center}
+				L'operatore \OR{} è il costrutto con la terza precedenza più alta. La associatività dell'operatore è da sinistra verso destra.
+		\end{paracol}
+		\hrulefill
+		%-----------------------------------------------------------------------------------------------------
+	
+			
+			\item $\phi = f_1 \Until{\alpha} f_2$:\\
+			Un espressione dei questo tipo è indicata dalla parola chiave \UNTILword{} ed è  espressa come segue:
+				\begin{center}
+					\emph{formula} \UNTIL{$\alpha$} \emph{formula}
+				\end{center}
+				Con $\alpha$ valore reale positivo.
+				L'operatore \UNTILword{} è il costrutto con la precedenza minore. La associatività dell'operatore è da sinistra verso destra.
+	\end{itemize}
+
+	
+	
+	
+	\section{Dettagli grammatica}
+	\subsection{Token utilizzati}
+	I token non banali utilizzati per generare il linguaggio sono:
+	\begin{description}
+		\item[<NUMBER>] token utilizzato per rappresentare un valore reale non negativo. Le stringhe identificate da questo token sono quelle che rispettano la seguente \emph{regular expression}:
+		\begin{center}
+			[0-9]+(\textbackslash.[0-9]+)?(e(\textbackslash+|\textbackslash-)?[0-9]+)?	
+		\end{center}
+	
+		\item[<VARIABLE>] token utilizzato per rappresentare un nome di variabile. Le stringhe identificate da questo token sono quelle che rispettano la seguente \emph{regular expression}:
+		\begin{center}
+				[a-zA-Z\_][a-zA-Z0-9\_]*	
+		\end{center}
+	
+		\item[<SIGN>] token utilizzato per rappresentare un il segno + oppure il segno -.
+		\item[<RELATION>]  token utilizzato per rappresentare i simboli di relazione: <, <=, >, >=, $\sim$=, =.
+	\end{description}
+	Gli spazi, tab, e i caratteri di nuova linea vengono tutti ignorati.
+	
+	\subsection{Regole di produzione}
+	Regole \emph{BNF} utilizzate per generare la grammatica sopra descritta:
+	\setlength{\grammarindent}{7em} 
+	\begin{grammar}
+	
+	<until\_rule> ::= <until\_rule> `\UNTILword[' <NUMBER> `]' <or\_rule> \alt <or\_rule>
+	
+	<or\_rule> ::= <or\_rule> `\OR' <and\_rule> \alt <and\_rule>
+	
+	<and\_rule> ::= <and\_rule> `\AND' <unary\_rule> \alt <unary\_rule>
+	
+	<unary\_rule> ::= `\NOT'  <unary\_rule> \alt `\GLOBALLYword[' <NUMBER> `]' <unary\_rule> \alt  `\FUTUREword[' <NUMBER> `]' <unary\_rule>\alt  <pred\_rule>
+	
+	<pred\_rule> ::= <sign\_rule> <sum\_rule> <RELATION> <sign\_rule> <NUMBER> \alt `\TRUE' \alt `\FALSE' \alt `(' <until\_rule> `)'
+	
+	<sum\_rule> ::= <prod\_rule> <SIGN> <sum\_rule> \alt <prod\_rule>
+	
+	<prod\_rule> ::= <NUMBER> `*' <VARIABLE> \alt  <VARIABLE> `*' <NUMBER> \alt <NUMBER> <VARIABLE> \alt <VARIABLE> <NUMBER> \alt <VARIABLE>
+	
+	<sing\_rule> ::= <SIGN> \alt <empty string>
+	\end{grammar}
+
+	
+	
+\end{document}

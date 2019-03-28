@@ -1,0 +1,223 @@
+\documentclass[10pt,a4paper]{article}
+
+%Import dei pacchetti necessari
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage[italian]{varioref}
+\usepackage{amsfonts,amsmath,amssymb,graphicx}
+\usepackage[boxed]{algorithm}
+\usepackage[noend]{algorithmic}
+\usepackage{listings}
+\usepackage{multicol}
+\usepackage[hidelinks]{hyperref}
+
+
+\input{../../commands.sty}
+\setcounter{secnumdepth}{1}
+
+%preamble
+\author{Giorgio Mariani}
+\date{}
+\title{Bounded Linear Temporal Logic}
+
+\begin{document}
+	\maketitle{}
+	
+	\begin{abstract}
+	In questo documento vengono presentate sintassi e semantica della \emph{Bounded Linear Temporal Logic} (\BLTL{}) e della \BLTLstar{}, logiche derivate della nota \emph{Linear Temporal Logic}.
+	\end{abstract}
+	
+	\section{Introduzione}
+	Una formula \BLTL{} (oppure una formula \BLTLstar) è utilizzata per descrive una certa proprietà "dilatata" nel tempo.
+	La validità della formula a differenza di altre logiche è definita rispetto ad un istante e dipendente dagli istanti temporali successivi a questo.
+
+	\section{Definizioni}
+	Prima di poter descrivere sintassi e semantica di una formula \BLTL{} occorre dare delle definizioni preliminari.
+	
+	\begin{multicols}{2}
+		\paragraph{Insieme delle variabili}
+	Definiamo $\Variables$ come l'insieme delle stringhe di lunghezza finita sopra l'alfabeto inglese.
+
+	\paragraph{Traccia di simulazione}
+	Una traccia di simulazione $\sigma:Var\times[s,h]\to\Reals$ (con $Var \subset \Variables$ e $s \le h$) è una funzione che definisce il valore di una certa variabile ad un certo istante di tempo.
+	\columnbreak
+	\paragraph{Inizio e orizzonte di simulazione}
+	Definiamo le costanti reali $\StartTime$ e $\Horizon$   ($\StartTime\le\Horizon$) rispettivamente come l'istante iniziale e finale di una traccia di simulazione, ovvero gli estremi (rispettivamente sinistro e destro) del dominio della data traccia. Il valore $\Horizon$ è noto anche come l'\emph{orizzonte} di simulazione.
+	\end{multicols}
+
+
+	
+	\section{Sintassi \BLTL}
+	Sono di seguito elencati i costrutti che generano il linguaggio \BLTL{}:
+	
+	\begin{multicols}{2}	
+	\begin{description}
+
+		\item $\rho(t)$
+		
+		\item $f_1 \lor f_2$ 
+		\item $f_1 \land f_2$ 
+		
+		
+		\item $\lnot f_1$
+	
+	
+		\item $f_1 \Until{\alpha} f_2$
+		
+		\item $\Globally{\alpha} f_1$
+		
+		\item $\Future{\alpha} f_1 $
+	\end{description}
+	\end{multicols}
+	Con $\rho$ predicato, $\alpha\in\Reals$ e $f_1$, $f_2$ sotto formule \BLTL{}.
+
+	
+	\newpage
+	\subsection{Predicati nel dettaglio}
+	Più specificatamente $\rho$ è un predicato il cui valore dipende dall'istante di tempo considerato, in particolare $\rho$ deve essere in una delle seguenti forme:
+		
+	\begin{align*}
+			\rho &= \sum_{i=0}^{n}{\alpha{}_i x_i\ \MetaRel\ \beta{}}\\
+			\rho &= True\\
+			\rho &= False
+	\end{align*}
+	
+	Tale per cui:
+	\begin{itemize}
+		\item  [-] $\alpha_i$ è una sequenza di costanti reali.
+		\item  [-] $\beta$ è constante reale.
+		\item  [-] $x_i$ è una sequenza di nomi di variabile in $\Variables$.
+		\item [-] $\MetaRel$ è una relazione binaria che può assumere valore uguale a $<$, $\le$, $>$, $\ge$, $=$ e $\ne$.
+	\end{itemize}
+	In altre parole $\rho$ può essere una relazione tra una combinazione lineare ed un valore costante, oppure può essere una costante booleana.
+	
+	
+	\subsection{Valore di un predicato}
+	Data una traccia di simulazione $\mu$ diremo che $\rho(t)$ è vero se:
+	
+	\begin{itemize}
+		\item 	Nel caso in cui $\rho = \sum_{i=0}^{n}{\alpha{}_i x_i\ \MetaRel\ \beta{}}$, allora questo è valido per un istante $t$ se e solo se:
+		$$\sum_{i=0}^{n}{\alpha{}_i\cdot \mu(x_i,t)}\ \MetaRel\ \beta{}$$
+		
+		\item Nel caso in cui $\rho = True$ allora $\rho(t)$ è valido.
+		
+		\item Nel caso in cui $\rho = False$ allora $\rho(t)$ non è valido.
+
+	\end{itemize}
+
+	
+	
+	
+	\section{Semantica \BLTL}
+	%Consideriamo una formula \BLTL{} $\phi$, una traccia di simulazione $\mu$ ed un istante $t\in[\StartTime,\Horizon - \MinTime(\phi)]$.
+	%La notazione $\mu,t \models \phi$	indica che la formula $\phi$ è valida per l'istante $t$ e la traccia $\mu$.
+	
+	Consideriamo una formula \BLTL{} $\phi$, una traccia di simulazione $\mu$ ed un istante $t$, vorremo poter dire se la formula $\phi$ è vera oppure falsa rispetto a $t$ data la traccia $\mu$ (espresso tramite le notazioni  $\mu,t \models \phi$ e  $\mu,t \not\models \phi$ rispettivamente).
+	
+
+	\subsubsection{Tempo minimo di simulazione}
+	Per poter definire la validità di una formula occorre prima esprimere la funzione $\MinTime:\BLTL\to\Reals$.
+	La funzione prende in input una formula \BLTL{} $\phi$ e restituisce la minima durata ($\Horizon-\StartTime$) che una traccia $\mu$ deve avere per poterne valutare almeno un istante.
+	\paragraph{}Definizione a casi di $\MinTime$: 
+	\begin{equation*}
+	\MinTime(\phi)= \begin{cases}
+	0									 	& \text{se } \phi=\rho\\
+	\MinTime(f_1)							& \text{se } \phi=\lnot f_1\\
+	max(\MinTime(f_1),\MinTime(f_2))	 	& \text{se } \phi=f_1\lor f_2\\
+	max(\MinTime(f_1),\MinTime(f_2))	 	& \text{se } \phi=f_1\land f_2\\
+	\alpha+max(\MinTime(f_1),\MinTime(f_2)) & \text{se } \phi=f_1\Until{\alpha} f_2\\
+	\alpha + \MinTime(f_1)					& \text{se } \Globally{\alpha} f_1\\
+	\alpha + \MinTime(f_1)					& \text{se } \Future{\alpha} f_1\\
+	\end{cases}
+	\end{equation*}
+	
+
+	\subsection{Definizione semantica}
+	Sia $\mu$ una traccia di simulazione con dominio $[s,h]$, $\phi$ una formula \BLTL{} e $t\in[s,h-\MinTime(\phi)]$, definiamo allora (in base alla sintassi di $\phi$) la validità di $\mu,t \models \phi$:
+	
+	
+	\begin{itemize}
+		\item \textbf{Caso in cui $\phi = \rho$:}
+		\newline{}
+		Diremo che $\mu,t \models \phi$ è valida se e solo se il predicato $\rho$ è valido per l'istante $t$.
+		
+		\item \textbf{Caso in cui $\phi=\lnot f_1$:}
+		\newline{}
+		Diremo che $\mu,t \models \phi$ è valida se e solo se $\mu,t\not\models f_1$ è valida.
+		
+		\item \textbf{Caso in cui $\phi=f_1\lor f_2$:}
+		\newline{}
+		Diremo che $\mu,t \models \phi$ è valida se e solo se $\mu,t\models f_1$ e/o $\mu,t\models f_2$ sono valide.
+		
+		\item \textbf{Caso in cui $\phi=f_1\land f_2$:}
+		\newline{}
+		Diremo che $\mu,t \models \phi$ è valida se e solo se $\mu,t\models f_1$ e $\mu,t\models f_2$ sono valide.
+		
+		\item \textbf{Caso in cui $\phi=f_1\Until{\alpha} f_2$:}
+		\newline{}
+		Diremo che $\mu,t \models \phi$ è valida se e solo se:
+		\begin{itemize}
+			\item [-] Esiste un  $t'\in [t,t+\alpha]$ per cui $\mu,t'\models f_1$ è valida.
+			\item [-] Per ogni $t'' \in [t,t')$ vale che $\mu,t''\models f_2$.
+		\end{itemize}
+	
+		\item \textbf{Caso in cui $\phi=\Globally{\alpha}f_1$:}
+		\newline{}
+		Diremo che $\mu,t \models \phi$ è valida se e solo se:
+		\begin{center}
+			Per ogni $t'\in [t,t+\alpha]$ vale che  $\mu,t'\models f_1$ è valida.
+		\end{center}
+	
+		\item \textbf{Caso in cui $\phi=\Future{\alpha}f_1$:}
+		\newline{}
+		Diremo che $\mu,t \models \phi$ è valida se e solo se:
+		\begin{center}
+			Esiste un $t'\in [t,t+\alpha]$ tale che  $\mu,t'\models f_1$ è valida.
+		\end{center}
+			
+	\end{itemize}
+
+	\section{Logica \BLTLstar}
+	%TODO inserire descrizione 
+	Consideriamo ora una variante della \BLTL{} dove al posto di avere i predicati abbiamo nomi di variabili (o costanti) booleane e chiamato tale logica \BLTLstar{}. Ovviamente la sintassi della \BLTLstar{} è quasi uguale a quella della \BLTL{}, l'unica differenza è l'assenza delle relazioni su combinazioni lineari di variabili reali, con al loro posto presenti solo nomi di variabile.
+	 \paragraph{Valutazione}
+	\begin{multicols}{2}
+		 La valutazione di una formula \BLTLstar{} richiede una definizione di traccia di simulazione leggermente diversa, il cui codominio non è più l'insieme dei numeri reali $\Reals$, ma bensì l'insieme $\{True,False\}$, quindi intuitivamente le variabili non sono più definite su valori reali, bensì su valori booleani. Ciò considerato l'unica differenza nella semantica consiste nel come è calcolata la valutazione di quelli che nella \BLTL{} erano predicati, infatti data una formula contente soltanto un nome di variabile $P$, una traccia di simulazione $\mu$ ed un istante $t\in [s,h]$, abbiamo che:
+		$\mu,t \models P$ è valida se e solo se $\mu(P,t) = True$
+	\end{multicols} 
+
+	 \subsubsection*{Esempio}
+	Per esempio una formula \BLTLstar{} $\phi$ potrebbe essere espressa nel seguente modo.
+	$$
+	\Future{2.03}(P_1 \land (True \Until{5} P_2))
+	$$
+	Con appunto $P_1$ e $P_2$ nomi di variabile.
+	Assumendo quindi di avere una traccia di simulazione $\mu$ definita come:
+	$$
+	\mu(P_1,t) = 
+	\begin{cases}
+	True								 	& \text{se } t\in[0,5)\\
+	False									& \text{se } t\in[5,10]\\
+	\end{cases}
+	$$
+	
+	$$
+	\mu(P_2,t) = 
+	\begin{cases}
+	True								 	& \text{se } t\in[0,1)\cup[4,10]\\
+	False									& \text{se } t\in[2,4)\\
+	\end{cases}
+	$$
+	
+	Possiamo affermare che $\mu, 0.5 \models \Future{2.03}(P_1 \land (True \Until{5} P_2))$ vale, infatti abbiamo che:
+	\begin{enumerate}
+	\item $\mu,0.5\models P_1$ vale banalmente.
+	\item $\mu,0.5\models P_2$ vale banalmente.
+	\item $\mu,0.5\models True \Until{5} P_2$ è valido in quanto $P_2$ è valido per l'istante $0.5$.
+	\item  $\mu,0.5\models P_1 \land (True \Until{5} P_2)$ è banalmente valido.
+	\item $\mu, 0.5 \models \Future{2.03}(P_1 \land (True \Until{5} P_2))$ è valido in quanto $P_1 \land (True \Until{5} P_2)$ è valido per l'istante $0.5$.
+	
+	\end{enumerate}
+	
+\end{document}

@@ -1,0 +1,112 @@
+\documentclass[10pt,a4paper]{article}
+
+%Import dei pacchetti necessari
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage[italian]{varioref}
+\usepackage{amsfonts,amsmath,amssymb,graphicx}
+\usepackage{multicol}
+\usepackage[hidelinks]{hyperref}
+
+\input{../../commands.sty}
+\setcounter{secnumdepth}{1}
+
+%preamble
+\author{Giorgio Mariani}
+\date{}
+\title{Descrizione Monitor Generato}
+
+
+\newcommand{\DataType}{\emph{data type}}
+\newcommand{\SFunction}{\emph{S-function}}
+\newcommand{\Iport}{\emph{Input Port}}
+\newcommand{\Oport}{\emph{Output Port}}
+\newcommand{\Gain}{\emph{Gain}}
+\newcommand{\Sum}{\emph{Sum}}
+\newcommand{\RelOp}{\emph{Relational Operator}}
+\newcommand{\MUX}{\emph{MUX}}
+
+
+\begin{document}
+	\maketitle{}
+	\begin{abstract}
+		In questo documento viene descritto il comportamento di un monitor generato dal sistema.
+	\end{abstract}
+	
+	\section{Descrizione monitor}
+	Assumiamo di avere un monitor generato dal sistema a partire da una formula \BLTL{} $\phi$.
+	Questo monitor consiste in un \emph{subsystem} di \Simulink{}, composto da differenti tipologie di blocchi interni, in particolare il "nucleo" di questo è dato da una \SFunction{}.
+	I blocchi in questione sono:
+	\begin{multicols}{3}
+	\begin{description}
+		\item [\Iport] Blocchi che indicano l'input del sistema, sarà presente un input port per ogni variabile in $\phi$, inoltre il nome del blocco sarà lo stesso della variabile. Il blocco ha \DataType{}  scalare reale non complesso.
+		\item [\Oport] Blocco che indicano l'output del sistema, questo sarà unico e con \DataType{} scalare booleano (logical).
+		\item [\Gain] Blocchi che prendono in ingresso un segnale e lo moltiplicano per uno scalare reale costante.
+		\item[\Sum] Blocco il cui output consiste nella somma dei segnali in ingresso.
+		\item [\RelOp] Blocco che prende in input due segnali e restituisce in output un segnale booleano indicante se la relazione associata al blocco è valida o meno.
+		\item [\MUX] Blocco che prende in input diversi segnali e li "raggruppa" in un unico vettore con larghezza la somma delle larghezze di questi. Per i nostri scopi il MUX prenderà in input $n$ segnali di larghezza $1$.
+		\item [\SFunction{}] Blocco che consente l'esecuzione, durante una simulazione \Simulink{}, di una funzione \emph{mex} che rispetti una certa segnatura. Nel monitor sarà presente un blocco \SFunction{} che esegue un file \emph{mex} in grado di valutare una formula \BLTLstar{}.		
+	\end{description}
+	\end{multicols}
+	Più avanti vedremo come questi blocchi interagiscono tra di loro nel monitor generato. 
+	
+	\section{Input del monitor}
+	Gli input del monitor dipendono dall'insieme di variabili presenti in $\phi$, infatti  per ogni variabile $v$ in $\phi$ deve essere presente nel monitor una \Iport{} con nome $v$, tipo di dato \textbf{double} e che accetta solo segnali scalari (ovvero con dimensione e larghezza pari a uno) non complessi. 
+	
+	
+	\section{Output del monitor}
+	Il monitor deve essere dotato di un unica porta di output (\Oport), con \DataType{} \emph{logical} scalare.
+	Il segnale in output del monitor deve rimane costante tra \Mstep{}.
+	\paragraph{}Assumiamo di trovarci ad un certo \Mstep{} di simulazione, allora il segnale in output del monitor assume il valore \textbf{1} ($true$) se e solo se la formula $\phi$ risulta valida per almeno uno tra gli istanti compresi tra l'inizio di simulazione e l'istante associato al timestep corrente meno $\MinTime(\phi)$.	
+
+	\hrulefill
+	\paragraph{nota:}
+	Utilizziamo come convenzione che intervalli del tipo $[a,b)$, con $a\ge b$, rappresentino l'insieme vuoto.
+	
+	\hrulefill
+	
+	\subsection{Descrizione formale output}
+	Una descrizione più formale del valore restituito in output del monitor durante un certo \Mstep{} $mt$ potrebbe essere la seguente.
+	\paragraph{}
+	Siano:
+	\begin{itemize}
+		\item $t_s$ l'istante iniziale di simulazione.
+		\item $t$ l' istante associato al timestep $mt$.
+		\item $\mu$ la traccia di simulazione contente i valori delle variabili in input al modello fino all'istante $t$.
+	\end{itemize}
+	Allora l'output del monitor al timestep $mt$ è:
+	\begin{itemize}
+		\item [] \textbf{ true ( 1 )} se e solo se vale che:
+		$$
+		\exists t'\in[ts,t -\MinTime(\phi))\text{\space\space} \mu,t'\not\models \phi
+		$$
+		
+		\item [] \textbf{false ( 0 )} se e solo se vale che:
+		$$
+		\forall t'\in[ts,t -\MinTime(\phi))\text{\space\space} \mu,t'\models \phi
+		$$
+	\end{itemize}
+
+
+
+	\section{Inserimento dei blocchi nel monitor}
+	%costruzione del monitor
+	La costruzione del monitor è organizzata principalmente in tre grossi passaggi:
+	\begin{enumerate}
+		\item Inserimento dei blocchi che implementano i predicati.
+		\item Inserimento e collegamento del blocco MUX.
+		\item Inserimento e impostazione dei parametri della \SFunction{}.
+	\end{enumerate}
+	%costruzione di un predicato
+	\paragraph{Costruzione dei predicati}
+	Solo i predicati del tipo $\sum \alpha_i x_i \MetaRel \beta$ vengono tradotti in blocchi, i predicati del tipo $True$ o $False$ vengono ignorati.
+	Consideriamo un predicato $\rho=\sum_{i=1}^{n} \alpha_i x_i  \MetaRel \beta$, questo viene implementato in più passaggi:
+	Prima viene aggiunto per ogni variabile $x_i$ un blocco \Gain{} con  con valore di gain $\alpha_i$ e collegato alla \Iport{} con nome $x_i$. Successivamente i segnali in uscita ai blocchi appena aggiunti vengono dati in input ad un blocco \Sum, il cui output rappresenta appunto la somma dei segnali in input. Infine vengono aggiunti un blocco con valore costante $\beta$ ed un blocco \RelOp{} collegato alla costante appena creata e al segnale in output del blocco somma. Il \RelOp{}  deve avere impostata come relazione il valore di $\MetaRel$.
+	
+	%inserimento del mux
+	\paragraph{Inserimento \MUX{} ed \SFunction{}}
+	Dopo che tutti i predicati sono stati implementati viene costruito un \MUX, il cui input consiste nei segnali booleani rappresentati i predicati (ovvero gli output dei \RelOp) e l'output consiste in un vettore contente tutti i segnali in input. Viene inserita infine una \SFunction{}, prendente in ingresso tale vettore e avente come parametro una conversione a \BLTLstar{} della formula $\phi$, dove ogni predicato  è identificato da un indice (utilizzato per ottenere il valore del predicato nel vettore in input alla funzione). L'output della \SFunction{} viene collegato alla \Oport.
+
+\end{document}
+ 
